@@ -1,6 +1,6 @@
 import { ArrowLeft, Award, Bell, Calendar, CheckCircle, Clock, CreditCard, FileText, Globe, Heart, HelpCircle, Info, MapPin, MessageSquare, PawPrint, Search, Settings, Shield, Star, Stethoscope, XCircle } from "lucide-react-native";
 import { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { FONT, T, useV3 } from "../contexts/AppContext";
 
 /* ── Reputation & History ──────────────────────────────────── */
@@ -92,7 +92,7 @@ export function ReputationScreen() {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 80 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 70 }}>
         {/* Owner card */}
         <View
           style={{
@@ -141,8 +141,28 @@ export function ReputationScreen() {
               ))}
             </View>
             <Text style={{ fontSize: 12, color: T.medium }}>
-              12 completed matches • Verified since 2025
+              12 completed matches · Verified since 2025
             </Text>
+          </View>
+        </View>
+
+        {/* Verification Tier Summary — Multi-tier trust indicator */}
+        <View style={{ marginHorizontal: 20, marginTop: 12, marginBottom: 4 }}>
+          <Text style={{ fontSize: 13, fontWeight: "700", color: T.dark, marginBottom: 8, fontFamily: FONT }}>
+            Multi-Tier Verification Status
+          </Text>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            {[
+              { tier: 1, label: "Tier 1", desc: "Owner Uploaded", done: true, color: T.amber, textColor: "#8a5a00" },
+              { tier: 2, label: "Tier 2", desc: "Vet Verified", done: true, color: T.teal, textColor: T.tealDark },
+              { tier: 3, label: "Tier 3", desc: "Breeder Validated", done: false, color: T.light, textColor: T.medium },
+            ].map((t) => (
+              <View key={t.tier} style={{ flex: 1, padding: 10, borderRadius: 12, backgroundColor: t.done ? (t.tier === 2 ? T.tealLight : T.amberLight) : T.bg, borderWidth: 1, borderColor: t.done ? t.color + "60" : T.border, alignItems: "center" }}>
+                <Text style={{ fontSize: 11, fontWeight: "700", color: t.done ? t.textColor : T.medium }}>{t.label}</Text>
+                <Text style={{ fontSize: 10, color: t.done ? t.textColor : T.medium, textAlign: "center", marginTop: 2 }}>{t.desc}</Text>
+                <Text style={{ fontSize: 14, marginTop: 4 }}>{t.done ? "✅" : "⬜"}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
@@ -507,7 +527,7 @@ export function NotificationsScreen() {
           <Text style={{ fontSize: 12, fontWeight: "600", color: T.teal }}>Mark all read</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 16, gap: 12, paddingBottom: 80 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 16, gap: 12, paddingBottom: 70 }}>
         {notifications.map((n, i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 16, borderRadius: 16, backgroundColor: T.white, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 }}>
             <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: T.tealLight, alignItems: "center", justifyContent: "center" }}>
@@ -576,7 +596,7 @@ export function EventsScreen() {
 }
 
 export function SettingsScreen() {
-  const { goBack } = useV3();
+  const { goBack, user, userName } = useV3();
   const settings = [
     { Icon: Bell, t: "Notification Settings" },
     { Icon: Shield, t: "Privacy & Security" },
@@ -598,6 +618,36 @@ export function SettingsScreen() {
           <Text style={{ fontSize: 16, fontWeight: "700", color: T.dark, fontFamily: FONT }}>
             Settings
           </Text>
+        </View>
+      </View>
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, backgroundColor: T.white, borderBottomWidth: 1, borderBottomColor: T.border }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          {user?.user_metadata?.avatar_url ? (
+            <Image
+              source={{ uri: user.user_metadata.avatar_url }}
+              style={{ width: 44, height: 44, borderRadius: 22 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: T.teal, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>
+                {(user?.user_metadata?.full_name || user?.email || userName)
+                  .split(/\s+/)
+                  .map((part) => part[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </Text>
+            </View>
+          )}
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: T.dark, fontFamily: FONT }}>
+              {user?.user_metadata?.full_name || userName}
+            </Text>
+            <Text style={{ fontSize: 12, color: T.medium }}>
+              {user?.email || "Signed in with Supabase"}
+            </Text>
+          </View>
         </View>
       </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 16, paddingBottom: 80 }}>

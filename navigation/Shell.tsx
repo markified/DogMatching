@@ -98,6 +98,7 @@ export function BottomNav() {
               strokeWidth={1.5}
             />
             <Text
+              numberOfLines={1}
               style={[
                 styles.navLabel,
                 { 
@@ -145,25 +146,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    height: 80,
-    paddingHorizontal: 8,
+    height: 70,
+    paddingHorizontal: 4,
     borderTopWidth: 1,
   },
   navTab: {
     flex: 1,
     flexDirection: "column",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    justifyContent: "center",
+    gap: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+    minWidth: 60,
   },
   navLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
+    textAlign: "center",
+    numberOfLines: 1,
   },
   activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 1,
   },
 });

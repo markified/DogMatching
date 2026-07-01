@@ -1,7 +1,7 @@
 import { ArrowLeft, Award, Camera, CheckCircle, Clock, Dna, FileCheck, FolderOpen, RotateCcw, Search, Shield, Star, Stethoscope, Syringe, Upload, XCircle } from "lucide-react-native";
 import { useState } from "react";
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { FONT, MOCK_VERIFIERS, T, useV3 } from "../contexts/AppContext";
+import { FONT, T, useV3 } from "../contexts/AppContext";
 
 function ProgressBar({ step, total }: { step: number; total: number }) {
   return (
@@ -79,7 +79,7 @@ const DOC_TYPES = [
 
 /* ── Screen 9A: Upload ─────────────────────────────────────── */
 export function VerifyUpload() {
-  const { navigate, goBack } = useV3();
+  const { navigate, goBack, dogs, createVerifierSubmission, user, userName } = useV3();
   const [selected, setSelected] = useState(0);
   const [uploaded, setUploaded] = useState<boolean[]>([
     false,
@@ -90,6 +90,18 @@ export function VerifyUpload() {
 
   const doUpload = () =>
     setUploaded((p) => p.map((v, i) => (i === selected ? true : v)));
+
+  const submitUpload = async () => {
+    const documentType = DOC_TYPES[selected]?.t ?? DOC_TYPES[0].t;
+    await createVerifierSubmission({
+      dogId: dogs[0]?.id ?? "11111111-1111-1111-1111-111111111111",
+      verifierName: user?.user_metadata?.full_name || userName,
+      submissionType: documentType,
+      documentUrl: "https://example.com/uploaded-document.pdf",
+      notes: "Uploaded from the app verification flow.",
+    });
+    navigate("verify-choose");
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: T.bg }}>
@@ -402,7 +414,7 @@ export function VerifyUpload() {
         }}
       >
         <TouchableOpacity
-          onPress={() => navigate("verify-choose")}
+          onPress={() => void submitUpload()}
           style={{
             width: "100%",
             paddingVertical: 14,
@@ -429,11 +441,11 @@ export function VerifyUpload() {
 
 /* ── Screen 9B: Choose Verifier ─────────────────────────────── */
 export function VerifyChoose() {
-  const { navigate, goBack } = useV3();
+  const { navigate, goBack, verifiers } = useV3();
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const filtered = MOCK_VERIFIERS.filter((v) =>
+  const filtered = verifiers.filter((v) =>
     v.name.toLowerCase().includes(search.toLowerCase()),
   );
 

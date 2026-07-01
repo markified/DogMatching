@@ -122,7 +122,32 @@ export function Onboarding() {
 
 /* ── Register ────────────────────────────────────────────────── */
 export function Register() {
-  const { navigate } = useV3();
+  const { navigate, signUp } = useV3();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [location, setLocation] = useState("Davao City, Philippines");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleRegister = async () => {
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      await signUp({ email, password, fullName, location });
+      navigate("home");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to create account.");
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <View style={[styles.container, { backgroundColor: T.white }]}>
       <View style={[styles.header, { backgroundColor: T.teal }]}>
@@ -131,11 +156,14 @@ export function Register() {
         </Text>
       </View>
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.formContainer}>
-        <InputField icon={User} placeholder="Full Name" />
-        <InputField icon={Mail} placeholder="Email Address" keyboardType="email-address" />
-        <InputField icon={Lock} placeholder="Password" secureTextEntry />
-        <InputField icon={Lock} placeholder="Confirm Password" secureTextEntry />
-        <InputField icon={MapPin} placeholder="Location" value="Davao City, Philippines" />
+        <InputField icon={User} placeholder="Full Name" value={fullName} onChangeText={setFullName} />
+        <InputField icon={Mail} placeholder="Email Address" keyboardType="email-address" value={email} onChangeText={setEmail} />
+        <InputField icon={Lock} placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
+        <InputField icon={Lock} placeholder="Confirm Password" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
+        <InputField icon={MapPin} placeholder="Location" value={location} onChangeText={setLocation} />
+        {error ? (
+          <Text style={{ color: T.coral, fontSize: 12, fontFamily: FONT }}>{error}</Text>
+        ) : null}
         
         <View style={styles.checkboxRow}>
           <View style={styles.checkbox} />
@@ -149,9 +177,10 @@ export function Register() {
 
         <TouchableOpacity
           style={[styles.button, { backgroundColor: T.teal }]}
-          onPress={() => navigate("home")}
+          onPress={() => void handleRegister()}
+          disabled={busy}
         >
-          <Text style={[styles.buttonText, { fontFamily: FONT }]}>Create Account</Text>
+          <Text style={[styles.buttonText, { fontFamily: FONT }]}>{busy ? "Creating..." : "Create Account"}</Text>
         </TouchableOpacity>
 
         <View style={styles.divider}>
@@ -196,7 +225,24 @@ export function Register() {
 
 /* ── Login ───────────────────────────────────────────────────── */
 export function Login() {
-  const { navigate } = useV3();
+  const { navigate, signIn } = useV3();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLogin = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await signIn({ email, password });
+      navigate("home");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to log in.");
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <View style={[styles.container, { backgroundColor: T.white }]}>
       <View style={[styles.header, { backgroundColor: T.teal }]}>
@@ -208,9 +254,9 @@ export function Login() {
         </View>
       </View>
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.formContainer}>
-        <InputField icon={Mail} placeholder="Email Address" keyboardType="email-address" />
+        <InputField icon={Mail} placeholder="Email Address" keyboardType="email-address" value={email} onChangeText={setEmail} />
         <View>
-          <InputField icon={Lock} placeholder="Password" secureTextEntry />
+          <InputField icon={Lock} placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
           <TouchableOpacity style={styles.forgotPassword}>
             <Text style={[styles.forgotPasswordText, { color: T.teal, fontFamily: FONT }]}>
               Forgot Password?
@@ -218,11 +264,16 @@ export function Login() {
           </TouchableOpacity>
         </View>
 
+        {error ? (
+          <Text style={{ color: T.coral, fontSize: 12, fontFamily: FONT }}>{error}</Text>
+        ) : null}
+
         <TouchableOpacity
           style={[styles.button, { backgroundColor: T.teal }]}
-          onPress={() => navigate("home")}
+          onPress={() => void handleLogin()}
+          disabled={busy}
         >
-          <Text style={[styles.buttonText, { fontFamily: FONT }]}>Log In</Text>
+          <Text style={[styles.buttonText, { fontFamily: FONT }]}>{busy ? "Logging in..." : "Log In"}</Text>
         </TouchableOpacity>
 
         <View style={styles.divider}>
@@ -292,13 +343,15 @@ function InputField({
   placeholder, 
   secureTextEntry, 
   keyboardType, 
-  value 
+  value,
+  onChangeText,
 }: { 
   icon: any;
   placeholder: string; 
   secureTextEntry?: boolean;
   keyboardType?: any;
   value?: string;
+  onChangeText?: (text: string) => void;
 }) {
   return (
     <View style={[styles.inputContainer, { borderColor: T.border, backgroundColor: T.white }]}>
@@ -309,7 +362,8 @@ function InputField({
         placeholderTextColor={T.medium}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
-        defaultValue={value}
+        value={value}
+        onChangeText={onChangeText}
       />
     </View>
   );
@@ -429,7 +483,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 48,
-    paddingBottom: 16,
+    paddingBottom: 12,
     alignItems: "center",
   },
   headerText: {
@@ -442,15 +496,16 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 24,
-    gap: 16,
+    paddingTop: 24,
+    paddingBottom: 32,
+    gap: 14,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     paddingHorizontal: 16,
-    height: 52,
+    height: 48,
     borderRadius: 12,
     borderWidth: 1,
   },

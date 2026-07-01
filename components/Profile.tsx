@@ -1,10 +1,11 @@
-import { ArrowLeft, Award, Camera, CheckCircle, Clock, Dna, Edit, FileCheck, FileText, LogOut, MapPin, MessageSquare, PawPrint, Plus, Send, Settings, Star, Stethoscope, Syringe, User } from "lucide-react-native";
+import { ArrowLeft, Award, Bell, Calendar, Camera, CheckCircle, Clock, Dna, Edit, FileCheck, FileText, LogOut, MapPin, MessageSquare, PawPrint, Plus, Send, Settings, Star, Stethoscope, Syringe, User } from "lucide-react-native";
 import { useState } from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import {
+    calculateCompatibilityScore,
+    Dog,
     FONT,
     IMGS,
-    MOCK_DOGS,
     T,
     useV3,
     VeriBadge,
@@ -12,8 +13,29 @@ import {
 
 /* ── Dog Profile (My Dog) ────────────────────────────────────── */
 export function DogProfile() {
-  const { navigate, goBack } = useV3();
+  const { navigate, goBack, dogs } = useV3();
   const [tab, setTab] = useState<"info" | "health" | "gallery">("info");
+  const dog =
+    dogs[0] ??
+    ({
+      id: "fallback-dog",
+      name: "Bella",
+      breed: "Shih Tzu",
+      age: "2 years",
+      sex: "Female",
+      size: "Small",
+      color: "White & Brown",
+      temperament: ["Friendly", "Calm", "Energetic"],
+      score: 94,
+      verified: true,
+      tier: 2,
+      ownerName: "Maria Santos",
+      ownerLocation: "Buhangin, Davao City",
+      ownerAvatar: "MS",
+      img: IMGS.bella,
+      rating: 4.8,
+      reviews: 12,
+    } as Dog);
 
   return (
     <View style={{ flex: 1, backgroundColor: T.bg }}>
@@ -44,7 +66,7 @@ export function DogProfile() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 80 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 70 }}>
         {/* Dog avatar */}
         <View
           style={{
@@ -56,7 +78,7 @@ export function DogProfile() {
         >
           <View style={{ position: "relative", marginBottom: 12 }}>
             <Image
-              source={{ uri: IMGS.bella }}
+              source={{ uri: dog.img }}
               style={{
                 width: 112,
                 height: 112,
@@ -78,10 +100,10 @@ export function DogProfile() {
               fontFamily: FONT,
             }}
           >
-            Bella
+            {dog.name}
           </Text>
           <Text style={{ fontSize: 14, color: T.medium }}>
-            Shih Tzu • 2 years • Female
+            {dog.breed} • {dog.age} • {dog.sex}
           </Text>
         </View>
 
@@ -147,11 +169,11 @@ export function DogProfile() {
               }}
             >
               {[
-                ["Breed", "Shih Tzu"],
-                ["Age", "2 years"],
-                ["Sex", "Female"],
-                ["Size", "Small"],
-                ["Color", "White & Brown"],
+                ["Breed", dog.breed],
+                ["Age", dog.age],
+                ["Sex", dog.sex],
+                ["Size", dog.size],
+                ["Color", dog.color],
               ].map(([k, v], i, arr) => (
                 <View
                   key={k}
@@ -176,7 +198,7 @@ export function DogProfile() {
                   Temperament
                 </Text>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                  {["Friendly", "Calm", "Energetic"].map((t) => (
+                  {dog.temperament.map((t) => (
                     <View
                       key={t}
                       style={{
@@ -408,7 +430,24 @@ export function DogProfile() {
 
 /* ── Owner Profile ─────────────────────────────────────────────── */
 export function OwnerProfile() {
-  const { navigate, goBack } = useV3();
+  const { navigate, goBack, user, userName, dogs, signOut } = useV3();
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const avatarInitials =
+    user?.user_metadata?.full_name
+      ?.split(/\s+/)
+      .map((part: string) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() ||
+    user?.email?.slice(0, 2).toUpperCase() ||
+    "U";
+  const profileLocation = user?.user_metadata?.location || "Davao City";
+  const memberSince = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    : "Jan 2025";
 
   const settings = [
     { Icon: Bell, t: "Notification Preferences", s: "notifications" as const },
@@ -451,7 +490,7 @@ export function OwnerProfile() {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 80 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 70 }}>
         {/* Profile header */}
         <View
           style={{
@@ -463,20 +502,28 @@ export function OwnerProfile() {
           }}
         >
           <View style={{ position: "relative", marginBottom: 12 }}>
-            <View
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                backgroundColor: T.teal,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text style={{ fontSize: 24, fontWeight: "700", color: "#fff" }}>
-                J
-              </Text>
-            </View>
+            {avatarUrl ? (
+              <Image
+                source={{ uri: avatarUrl }}
+                style={{ width: 80, height: 80, borderRadius: 40 }}
+                resizeMode="cover"
+              />
+            ) : (
+              <View
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 40,
+                  backgroundColor: T.teal,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ fontSize: 24, fontWeight: "700", color: "#fff" }}>
+                  {avatarInitials}
+                </Text>
+              </View>
+            )}
             <View style={{ position: "absolute", bottom: -4, right: -4 }}>
               <Award size={20} color="#f59e0b" fill="#f59e0b" strokeWidth={1.5} />
             </View>
@@ -489,17 +536,15 @@ export function OwnerProfile() {
               fontFamily: FONT,
             }}
           >
-            Juan dela Cruz
+            {user?.user_metadata?.full_name || userName}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <MapPin size={12} color={T.medium} strokeWidth={1.5} />
-            <Text style={{ fontSize: 14, color: T.medium }}>
-              Davao City
-            </Text>
+            <Text style={{ fontSize: 14, color: T.medium }}>{profileLocation}</Text>
             <Text style={{ fontSize: 14, color: T.medium }}> • </Text>
             <Calendar size={12} color={T.medium} strokeWidth={1.5} />
             <Text style={{ fontSize: 14, color: T.medium }}>
-              Member since Jan 2025
+              Member since {memberSince}
             </Text>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
@@ -535,7 +580,7 @@ export function OwnerProfile() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 12, paddingBottom: 4 }}
           >
-            {MOCK_DOGS.slice(0, 2).map((dog) => (
+            {dogs.slice(0, 2).map((dog) => (
               <TouchableOpacity
                 key={dog.id}
                 onPress={() => navigate("dog-profile")}
@@ -585,6 +630,7 @@ export function OwnerProfile() {
               </TouchableOpacity>
             ))}
             <TouchableOpacity
+              onPress={() => navigate("dog-profile")}
               style={{
                 width: 80,
                 height: 120,
@@ -698,6 +744,7 @@ export function OwnerProfile() {
               </TouchableOpacity>
             ))}
             <TouchableOpacity
+              onPress={() => void signOut().then(() => navigate("landing"))}
               style={{
                 flexDirection: "row",
                 alignItems: "center",
@@ -729,8 +776,9 @@ export function OwnerProfile() {
 
 /* ── Match Profile (Other Dog) ───────────────────────────────── */
 export function MatchProfileScreen() {
-  const { navigate, goBack, selectedDog } = useV3();
-  const dog = selectedDog || MOCK_DOGS[0];
+  const { navigate, goBack, selectedDog, dogs, myDog } = useV3();
+  const dog = selectedDog || dogs[1] || dogs[0];
+  const liveScore = calculateCompatibilityScore(myDog, dog);
 
   return (
     <View style={{ flex: 1, backgroundColor: T.bg }}>
@@ -742,14 +790,41 @@ export function MatchProfileScreen() {
           {dog.name}'s Profile
         </Text>
       </View>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 80 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 70 }}>
         <View style={{ alignItems: "center", paddingTop: 24, paddingBottom: 20, backgroundColor: T.white }}>
           <Image source={{ uri: dog.img }} style={{ width: 112, height: 112, borderRadius: 56, borderWidth: 4, borderColor: T.teal }} resizeMode="cover" />
           <Text style={{ fontSize: 24, fontWeight: "700", marginTop: 12, color: T.dark, fontFamily: FONT }}>{dog.name}</Text>
-          <Text style={{ fontSize: 14, color: T.medium }}>{dog.breed} • {dog.age} • {dog.sex}</Text>
+          <Text style={{ fontSize: 14, color: T.medium }}>{dog.breed} · {dog.age} · {dog.sex}</Text>
           <View style={{ marginTop: 8 }}><VeriBadge verified={dog.verified} tier={dog.tier} /></View>
         </View>
+
         <View style={{ paddingHorizontal: 20, paddingVertical: 20, gap: 12 }}>
+          {/* Compatibility Score Panel */}
+          <View style={{ padding: 16, borderRadius: 16, backgroundColor: T.primaryLight, borderWidth: 1, borderColor: T.primary + "40" }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 }}>
+              <Award size={16} color={T.primaryDark} strokeWidth={1.5} />
+              <Text style={{ fontSize: 14, fontWeight: "700", color: T.primaryDark, fontFamily: FONT }}>
+                Compatibility with {myDog.name}
+              </Text>
+              <View style={{ marginLeft: "auto", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12, backgroundColor: T.primary }}>
+                <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>{liveScore}%</Text>
+              </View>
+            </View>
+            {/* Score factor breakdown */}
+            {[
+              { label: "Breed Match", value: dog.breed === myDog.breed ? "Same breed ✓" : "Different breed", good: dog.breed === myDog.breed },
+              { label: "Sex Compatibility", value: dog.sex !== myDog.sex ? "Opposite sex ✓" : "Same sex", good: dog.sex !== myDog.sex },
+              { label: "Age Range", value: `${myDog.age} → ${dog.age}`, good: true },
+              { label: "Temperament", value: dog.temperament.filter(t => myDog.temperament.includes(t)).length > 0 ? `${dog.temperament.filter(t => myDog.temperament.includes(t)).length} shared traits` : "Different traits", good: dog.temperament.filter(t => myDog.temperament.includes(t)).length > 0 },
+            ].map((f) => (
+              <View key={f.label} style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 6, borderTopWidth: 1, borderTopColor: T.primary + "20" }}>
+                <Text style={{ fontSize: 13, color: T.primaryDark }}>{f.label}</Text>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: f.good ? T.primaryDark : T.medium }}>{f.value}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Basic Info */}
           <View style={{ padding: 16, borderRadius: 16, backgroundColor: T.white, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
               <FileText size={16} color={T.dark} strokeWidth={1.5} />
@@ -762,6 +837,26 @@ export function MatchProfileScreen() {
               </View>
             ))}
           </View>
+
+          {/* Verification status */}
+          <View style={{ padding: 16, borderRadius: 16, backgroundColor: T.white, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+              <CheckCircle size={16} color={T.dark} strokeWidth={1.5} />
+              <Text style={{ fontSize: 14, fontWeight: "700", color: T.dark }}>Verification</Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text style={{ fontSize: 14, color: T.medium }}>Tier Status</Text>
+              <VeriBadge verified={dog.verified} tier={dog.tier} />
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 8 }}>
+              <Text style={{ fontSize: 14, color: T.medium }}>Owner Rating</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <Star size={14} color="#f59e0b" fill="#f59e0b" strokeWidth={1.5} />
+                <Text style={{ fontSize: 14, fontWeight: "600", color: T.dark }}>{dog.rating} ({dog.reviews} reviews)</Text>
+              </View>
+            </View>
+          </View>
+
           <TouchableOpacity onPress={() => navigate("send-request", dog)} style={{ width: "100%", paddingVertical: 14, borderRadius: 12, backgroundColor: T.teal, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 6 }}>
             <Send size={16} color="#fff" strokeWidth={2} />
             <Text style={{ fontSize: 14, fontWeight: "600", color: "#fff", fontFamily: FONT }}>Send Match Request</Text>
@@ -774,8 +869,20 @@ export function MatchProfileScreen() {
 
 /* ── Send Request ────────────────────────────────────────────── */
 export function SendRequest() {
-  const { navigate, goBack, selectedDog } = useV3();
-  const dog = selectedDog || MOCK_DOGS[0];
+  const { navigate, goBack, selectedDog, dogs, createMatchRequest, user, userName } = useV3();
+  const dog = selectedDog || dogs[0] || (dogs[0] as Dog);
+  const requesterName = user?.user_metadata?.full_name || userName;
+  const requesterEmail = user?.email || undefined;
+
+  const submitRequest = async () => {
+    await createMatchRequest({
+      dogId: dog.id,
+      requesterName,
+      requesterEmail,
+      message: "Hi, I’d like to request a match.",
+    });
+    navigate("request-received");
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: T.bg }}>
@@ -806,11 +913,17 @@ export function SendRequest() {
             <MessageSquare size={16} color={T.dark} strokeWidth={1.5} />
             <Text style={{ fontSize: 14, fontWeight: "700", color: T.dark }}>Message (Optional)</Text>
           </View>
-          <View style={{ borderRadius: 12, borderWidth: 1, borderColor: T.border, padding: 12, minHeight: 100, backgroundColor: T.bg }}>
-            <Text style={{ fontSize: 14, color: T.medium }}>Write a message...</Text>
-          </View>
+          <TextInput
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Write a message to the owner..."
+            placeholderTextColor={T.medium}
+            multiline
+            numberOfLines={4}
+            style={{ borderRadius: 12, borderWidth: 1, borderColor: T.border, padding: 12, minHeight: 100, backgroundColor: T.bg, fontSize: 14, color: T.dark, textAlignVertical: "top" }}
+          />
         </View>
-        <TouchableOpacity onPress={() => navigate("home")} style={{ width: "100%", paddingVertical: 14, borderRadius: 12, backgroundColor: T.teal, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 6 }}>
+        <TouchableOpacity onPress={() => void submitRequest()} style={{ width: "100%", paddingVertical: 14, borderRadius: 12, backgroundColor: T.teal, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 6 }}>
           <CheckCircle size={16} color="#fff" strokeWidth={2} />
           <Text style={{ fontSize: 14, fontWeight: "600", color: "#fff", fontFamily: FONT }}>Send Request</Text>
         </TouchableOpacity>
